@@ -22,7 +22,7 @@ class Board(models.Model):
     description = models.TextField(max_length=2048)
 
     users = models.ManyToManyField(User, related_name='boards')
-    creator = models.ForeignKey(User, related_name='ownboards')
+    # creator = models.ForeignKey(User, related_name='ownboards')
 
 
 class TodoList(models.Model):
@@ -42,8 +42,18 @@ class Task(models.Model):
     todo_list = models.ForeignKey('TodoList', on_delete=models.PROTECT)
     tags = models.ManyToManyField('TaskTag', related_name='tasks')
     blocks_tasks = models.ManyToManyField('Task', related_name='blocked_by') # мы не можем приступить к выполнению блокируемой задачи пока не решим все задачи-блокираторы (устанавливается определённый порядок выполнения)
-    subtask_for = models.ForeignKey('Task', related_name='subtasks') # обычно одну сложную задачу разбивают на более простые и мелкие подзадачи
-    refers_to = models.ForeignKey('Task', related_name='refs') # от выполнения одной задачи зависит и выполнение второй (выполняются в любом порядке)
+    subtask_for = models.ForeignKey(
+                                    'Task', 
+                                    related_name='subtasks', 
+                                    on_delete=models.SET_NULL, 
+                                    null=True
+                                    ) # обычно одну сложную задачу разбивают на более простые и мелкие подзадачи
+    # refers_to = models.ForeignKey(
+    #                               'Task', 
+    #                               related_name='refs',
+    #                               on_delete=models.SET_NULL, 
+    #                               null=True
+    #                               ) # от выполнения одной задачи зависит и выполнение второй (выполняются в любом порядке)
     
 
 class TaskTag(models.Model):
