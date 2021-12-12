@@ -1,11 +1,9 @@
-from functools import partial
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets, status
 from .serializers import TaskSerializer, TodoListSerializer, BoardSerializer, TaskTagSerializer
 from .models import Task, TaskTag, TodoList, Board
-from kanban_board_project.main import serializers
 # from django.db.models.query import QuerySet
 
 
@@ -112,17 +110,35 @@ class BoardViewSet(viewsets.ViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class TaskFilter:
+    def __init__(self, instance, query_params=None, many=None):
+        if not query_params:
+            self.filtered_instance = instance
+            return
+
+        if many:
+            return
+
+
+
 class TaskViewSet(viewsets.ViewSet):
-    def list(self, request, board_pk=None, todolist_pk=None,):
+    def list(self, request, board_pk=None):
         """
         get tasks of the board with filtering and pagination
         """
-        board = Board.objects.all()
-        tasks = board.tasks.all() # todo: filter
-        serializer = BoardSerializer(tasks, many=True)        
+        queryset = Board.objects.all()
+        board = get_object_or_404(queryset, pk=board_pk)
+        # q_params = request.query_params
+        tasks = board.tasks
+        # if q_params:
+            # filter = TaskFilter(board.tasks, query_params=q_params, many=True)            
+        #     tasks = filter.filtered_instance
+        # else:
+        #     tasks = board.tasks.all()
+        serializer = TaskSerializer(tasks, many=True, context={'request': request})
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
-    def create(self, request, board_pk=None, todolist_pk=None, pk=None):
+    def create(self, request, board_pk=None, pk=None):
         """
         create new task in the board
         """
@@ -132,7 +148,7 @@ class TaskViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    def retrieve(self, request, board_pk=None, todolist_pk=None, pk=None):
+    def retrieve(self, request, board_pk=None, pk=None):
         """
         get only one task of the todolist
         get subtasks of this task
@@ -145,7 +161,7 @@ class TaskViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    def update(self, request, board_pk=None, todolist_pk=None, pk=None):
+    def update(self, request, board_pk=None, pk=None):
         """
         change
         """
@@ -158,7 +174,7 @@ class TaskViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_205_RESET_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    def partial_update(self, request, board_pk=None, todolist_pk=None, pk=None):
+    def partial_update(self, request, board_pk=None, pk=None):
         """
         change some of this: 
         subtasks-list(by ids), 
@@ -178,14 +194,14 @@ class TaskViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_205_RESET_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    def destroy(self, request, board_pk=None, todolist_pk=None, pk=None):
+    def destroy(self, request, board_pk=None, pk=None):
         queryset = Task.objects.all()
         task = get_object_or_404(queryset, pk=pk)
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TaskTagViewSet(APIView):
+class TaskTagViewSet(viewsets.ViewSet):
     def list(self, request):
         tags = TaskTag.objects.all()
         serializer = TaskTagSerializer(tags, many=True)
@@ -215,7 +231,7 @@ class TaskTagViewSet(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TodoListViewSet(APIView):
+class TodoListViewSet(viewsets.ViewSet):
     def list(self, request, board_pk=None):
         boards = Board.objects.all()
         board = get_object_or_404(boards, pk=board_pk)
@@ -231,8 +247,8 @@ class TodoListViewSet(APIView):
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def retrieve(self, request, board_pk=None, pk=None):
-        pass
+    # def retrieve(self, request, board_pk=None, pk=None):
+    #     pass
 
     def update(self, request, board_pk=None, pk=None):
         queryset = TodoList.objects.all()
