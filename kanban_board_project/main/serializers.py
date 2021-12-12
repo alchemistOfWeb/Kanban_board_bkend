@@ -45,27 +45,33 @@ class FilteredTaskSerializer(serializers.ListSerializer):
     is_archive
     &
     completion between degree1 and degree2
-
-
     """
+    tags = TaskTagSerializer(many=True)
 
     def to_representation(self, data):
         q_params = self.context['request'].query_params
-
         date_format = '%d-%m-%Y %H:%M:%S'
-        deadline_range = (
-            datetime.datetime.strptime(
-                q_params['deadline_range'][0], date_format),
-            datetime.datetime.strptime(
-                q_params['deadline_range'][1], date_format)
-        )
+        
+        if 'hastags' in q_params:
+            data = data.filter(tags__id__in=q_params['hastags'])
+        
+        if 'deadline_range' in q_params:            
+            deadline_range = (
+                datetime.datetime.strptime(
+                    q_params['deadline_range'][0], date_format),
+                datetime.datetime.strptime(
+                    q_params['deadline_range'][1], date_format)
+            )
+            data = data.filter(deadline_at__range=deadline_range)
 
-        data = data\
-            .filter(tags__id__in=q_params['hastags'])\
-            .filter(deadline_at__range=deadline_range)\
-            .order_by('completion')
+        if 'ob_completion' in q_params:
+            data = data.order_by('completion')
 
         return super(FilteredTaskSerializer, self).to_representation(data)
+
+    class Meta:
+        model = Task
+        fields = '__all__'
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -80,8 +86,17 @@ class TaskSerializer(serializers.ModelSerializer):
         todolist: id,
         position: integer
     }  
+
+    todo: normal tags field
     """
-    tags = TaskTagSerializer(many=True)
+    # tags = TaskTagSerializer(many=True)
+    # def get_tags(self):
+    #     tags = TaskTagSerializer(many=True)
+
+    # def create(self, validated_data):
+    #     # print("__________________")
+    #     # print(validated_data)
+    #     return super().create(validated_data)
 
     # blocks = BlockTaskListSerializer(many=True)
 

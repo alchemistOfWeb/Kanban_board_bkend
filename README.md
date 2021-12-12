@@ -23,5 +23,14 @@ python manage.py shell
 dotenv set SECRET_KEY 'getted_secret_key' # сюда нужно вставить полученный ключ
 ```
 
+### step
+```bash
+create superuser
+name: *******
+pas: **********
+```
 
+testuser: zUb88ABF
+testuser2: LfqTAcG8
+testuser3: 8yalLhfZ
 

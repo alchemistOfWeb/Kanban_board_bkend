@@ -129,7 +129,7 @@ class TaskViewSet(viewsets.ViewSet):
         queryset = Board.objects.all()
         board = get_object_or_404(queryset, pk=board_pk)
         # q_params = request.query_params
-        tasks = board.tasks
+        tasks = board.tasks.all()
         # if q_params:
             # filter = TaskFilter(board.tasks, query_params=q_params, many=True)            
         #     tasks = filter.filtered_instance
@@ -144,9 +144,10 @@ class TaskViewSet(viewsets.ViewSet):
         """
         data = request.data
         serializer = TaskSerializer(data=data)
-        if serializer.is_valid():            
+        if serializer.is_valid():
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, board_pk=None, pk=None):
         """
@@ -156,10 +157,7 @@ class TaskViewSet(viewsets.ViewSet):
         queryset = Task.objects.all()
         task = get_object_or_404(queryset, pk=pk)
         serializer = TaskSerializer(task)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def update(self, request, board_pk=None, pk=None):
         """
@@ -208,8 +206,14 @@ class TaskTagViewSet(viewsets.ViewSet):
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request):
+        """
+        {
+            "title": "unique tag name",
+            "color": "#ff0000"
+        }
+        """
         data = request.data
-        serializer = BoardSerializer(data=data)
+        serializer = TaskTagSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
@@ -224,6 +228,15 @@ class TaskTagViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def partial_update(self, request, pk=None):
+        queryset = TaskTag.objects.all()
+        tag = get_object_or_404(queryset, pk=pk)
+        serializer = TaskTagSerializer(tag, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def destroy(self, request, pk=None):
         queryset = TaskTag.objects.all()
         tasktag = get_object_or_404(queryset, pk=pk)
@@ -233,11 +246,11 @@ class TaskTagViewSet(viewsets.ViewSet):
 
 class TodoListViewSet(viewsets.ViewSet):
     def list(self, request, board_pk=None):
-        boards = Board.objects.all()
-        board = get_object_or_404(boards, pk=board_pk)
+        queryset = Board.objects.all()
+        board = get_object_or_404(queryset, pk=board_pk)
         todolists = board.todolists.all()
-        serialized_data = TodoListSerializer(todolists, many=True)
-        return Response(serialized_data, status=status.HTTP_200_OK)
+        serializer = TodoListSerializer(todolists, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, board_pk=None):
         data = request.data
@@ -245,7 +258,7 @@ class TodoListViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # def retrieve(self, request, board_pk=None, pk=None):
     #     pass
