@@ -50,19 +50,25 @@ class FilteredTaskSerializer(serializers.ListSerializer):
 
     def to_representation(self, data):
         q_params = self.context['request'].query_params
-        date_format = '%d-%m-%Y %H:%M:%S'
+        date_format = '%Y-%m-%d %H:%M'
         
         if 'hastags' in q_params:
             data = data.filter(tags__id__in=q_params['hastags'])
         
-        if 'deadline_range' in q_params:            
+        if 'dl_min' in q_params and 'dl_max' in q_params:
             deadline_range = (
                 datetime.datetime.strptime(
-                    q_params['deadline_range'][0], date_format),
+                    q_params['dl_min'], date_format),
                 datetime.datetime.strptime(
-                    q_params['deadline_range'][1], date_format)
+                    q_params['dl_max'], date_format)
             )
             data = data.filter(deadline_at__range=deadline_range)
+        elif 'dl_min' in q_params:
+            data = data.filter(deadline_at__gt=q_params['dl_min'])
+        elif 'dl_max' in q_params:
+            data = data.filter(deadline_at__lt=q_params['dl_max'])
+        else:
+            pass
 
         if 'ob_completion' in q_params:
             data = data.order_by('completion')
