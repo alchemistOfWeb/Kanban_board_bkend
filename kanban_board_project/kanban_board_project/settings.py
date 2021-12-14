@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django_filters',
     'colorfield',
     'djoser',
+    'drf_yasg',
     'main',
 ]
 
