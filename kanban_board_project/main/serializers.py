@@ -46,32 +46,68 @@ class FilteredTaskSerializer(serializers.ListSerializer):
     &
     completion between degree1 and degree2
     """
+    allow_orderby_params = ['completion', '-completion', 'deadline_at', '-deadline_at']
+
+
     tags = TaskTagSerializer(many=True)
+
+    def deadline_range_filter(self, data, q_params, date_format='%Y-%m-%d %H:%M'):        
+        dl_min = q_params.get('dl_min')
+        dl_max = q_params.get('dl_max')
+
+        if dl_min:
+            dl_min = datetime.datetime.strptime(q_params['dl_min'], date_format)
+
+        if dl_max:
+            dl_max = datetime.datetime.strptime(q_params['dl_max'], date_format)
+
+        if dl_min and dl_max:
+            return data.filter(deadline_at__range=(dl_min, dl_max))
+
+        if dl_min:
+            return data.filter(deadline_at__gt=q_params['dl_min'])
+
+        if dl_max:
+            return data.filter(deadline_at__lt=q_params['dl_max'])
+
+    
+    def tags_filter(self, data, q_params):
+        if 'hastags' in q_params:
+            tags_ids = q_params['hastags'].split(',')            
+            return data.filter(tags__id__in=tags_ids)
+        return data
+
+
+    def completion_filter(self, data, q_params):
+        cmpl_min = q_params.get('completion_min')
+        cmpl_max = q_params.get('completion_max')
+
+        if cmpl_min and cmpl_max:
+            return data.filter(completion__range=(cmpl_min, cmpl_max))
+        
+        if cmpl_min:
+            return data.filter(completion__gt=cmpl_min)
+
+        if cmpl_max:
+            return data.filter(completion__lt=cmpl_max)
+
+        return data
 
     def to_representation(self, data):
         q_params = self.context['request'].query_params
         date_format = '%Y-%m-%d %H:%M'
         
-        if 'hastags' in q_params:
-            data = data.filter(tags__id__in=q_params['hastags'])
-        
-        if 'dl_min' in q_params and 'dl_max' in q_params:
-            deadline_range = (
-                datetime.datetime.strptime(
-                    q_params['dl_min'], date_format),
-                datetime.datetime.strptime(
-                    q_params['dl_max'], date_format)
-            )
-            data = data.filter(deadline_at__range=deadline_range)
-        elif 'dl_min' in q_params:
-            data = data.filter(deadline_at__gt=q_params['dl_min'])
-        elif 'dl_max' in q_params:
-            data = data.filter(deadline_at__lt=q_params['dl_max'])
-        else:
-            pass
+        data = self.completion_filter(data, q_params)
 
-        if 'ob_completion' in q_params:
-            data = data.order_by('completion')
+        data = self.tags_filter(data, q_params)
+
+        data = self.deadline_range_filter(data, q_params, date_format='%Y-%m-%d %H:%M')
+        
+        if 'orderby' in q_params:
+            oparams = q_params['orderby'].split(',')
+            for param in oparams:
+                if param in self.allow_orderby_params:
+                    data = data.order_by(param)
 
         return super(FilteredTaskSerializer, self).to_representation(data)
 

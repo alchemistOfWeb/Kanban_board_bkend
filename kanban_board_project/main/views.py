@@ -1,11 +1,12 @@
 from django.shortcuts import render, get_object_or_404
+from django_filters.filters import OrderingFilter
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from .serializers import TaskSerializer, TodoListSerializer, BoardSerializer, TaskTagSerializer
 from .models import Task, TaskTag, TodoList, Board
 # from django.db.models.query import QuerySet
-
+from django_filters.rest_framework import DjangoFilterBackend
 
 # Create your views here.
 """
@@ -46,6 +47,10 @@ TaskTag: title
 
 
 class BoardViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+    # filter_backends = 
+    # permission_classes_by_action = {'list': [permissions.IsAuthenticated], 'retrieve': [permissions.IsAuthenticated]}
+
     def list(self, request):
         """
         todo:
@@ -110,18 +115,13 @@ class BoardViewSet(viewsets.ViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TaskFilter:
-    def __init__(self, instance, query_params=None, many=None):
-        if not query_params:
-            self.filtered_instance = instance
-            return
-
-        if many:
-            return
-
-
 
 class TaskViewSet(viewsets.ViewSet):
+    # filter_backends = (DjangoFilterBackend, OrderingFilter)
+    # ordering_fields = ['deadline_at', 'position', 'completion']
+    permission_classes = [permissions.IsAuthenticated]
+
+
     def list(self, request, board_pk=None):
         """
         get tasks of the board with filtering and pagination
@@ -130,11 +130,7 @@ class TaskViewSet(viewsets.ViewSet):
         board = get_object_or_404(queryset, pk=board_pk)
         # q_params = request.query_params
         tasks = board.tasks.all()
-        # if q_params:
-            # filter = TaskFilter(board.tasks, query_params=q_params, many=True)            
-        #     tasks = filter.filtered_instance
-        # else:
-        #     tasks = board.tasks.all()
+        
         serializer = TaskSerializer(tasks, many=True, context={'request': request})
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
@@ -200,6 +196,9 @@ class TaskViewSet(viewsets.ViewSet):
 
 
 class TaskTagViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+
+
     def list(self, request):
         tags = TaskTag.objects.all()
         serializer = TaskTagSerializer(tags, many=True)
@@ -245,6 +244,9 @@ class TaskTagViewSet(viewsets.ViewSet):
 
 
 class TodoListViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes_by_action = {'list': [permissions.IsAuthenticated]}
+
     def list(self, request, board_pk=None):
         queryset = Board.objects.all()
         board = get_object_or_404(queryset, pk=board_pk)
