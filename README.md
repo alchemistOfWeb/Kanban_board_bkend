@@ -51,12 +51,13 @@ testuser: zUb88ABF
 testuser2: LfqTAcG8
 testuser3: 8yalLhfZ
 
-### step
+### step 8
 теперь можно запустить тестовый сервер
 ```bash
 python manage.py runserver
 ```
 
+### step 9 (swagger)
 перейдя по данному адресу можно посмотреть и опробовать все возможные запросы к серверу
 ```
 http:\\{your_host}\swagger
