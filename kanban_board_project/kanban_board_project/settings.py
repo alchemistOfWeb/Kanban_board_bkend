@@ -16,6 +16,7 @@ from dotenv import  dotenv_values
 import os
 
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -107,6 +108,10 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
+
+# SWAGGER_SETTINGS = {
+#     "DEFAULT_AUTO_SCHEMA_CLASS": "main.CustomAutoSchema"
+# }
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
