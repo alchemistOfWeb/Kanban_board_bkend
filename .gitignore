@@ -5,3 +5,4 @@ film_base/db.sqlite3
 .env
 .idea
 db.*
+static_doc/

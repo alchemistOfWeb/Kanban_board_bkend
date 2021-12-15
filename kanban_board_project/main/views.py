@@ -64,7 +64,7 @@ class BoardViewSet(viewsets.ViewSet):
         """
         todo:
         get full description of the board
-        get info about tasks and todolists of the board
+        get info about tasks and todolists of the board (tasks/todolists count,)
         get todolists with paginated tasks inside
         """
         queryset = Board.objects.all()
@@ -100,6 +100,8 @@ class BoardViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_description="delete the board",
+                         responses={204: ""})
     def destroy(self, request, pk=None):
         """
         delete board with all its todolists and tasks
@@ -197,6 +199,8 @@ class TaskViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_205_RESET_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_description="delete the task",
+                         responses={204: ""})
     def destroy(self, request, board_pk=None, pk=None):
         queryset = Task.objects.all()
         task = get_object_or_404(queryset, pk=pk)
@@ -209,13 +213,16 @@ class TaskTagViewSet(viewsets.ViewSet):
     swagger_schema = CustomAutoSchema
     my_tags = ['Task Tags']
 
+    @swagger_auto_schema(operation_description="create new task tag",                         
+                         responses={200: TaskTagSerializer(many=True)})
     def list(self, request):
         tags = TaskTag.objects.all()
         serializer = TaskTagSerializer(tags, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(operation_description="create new task tag",
-                         query_serializer=TaskTagSerializer)
+                         query_serializer=TaskTagSerializer,
+                         responses={201: TaskTagSerializer})
     def create(self, request):
         """
         {
@@ -231,7 +238,8 @@ class TaskTagViewSet(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(operation_description="update the task",
-                         query_serializer=TaskTagSerializer)
+                         query_serializer=TaskTagSerializer,
+                         responses={205: TaskTagSerializer})
     def update(self, request, pk=None):
         queryset = TaskTag.objects.all()
         tag = get_object_or_404(queryset, pk=pk)
@@ -242,7 +250,8 @@ class TaskTagViewSet(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(operation_description="update the task",
-                         query_serializer=TaskTagSerializer(partial=True))
+                         query_serializer=TaskTagSerializer(partial=True),
+                         responses={205: TaskTagSerializer})
     def partial_update(self, request, pk=None):
         queryset = TaskTag.objects.all()
         tag = get_object_or_404(queryset, pk=pk)
@@ -252,6 +261,8 @@ class TaskTagViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_description="delete the task tag",
+                         responses={204: ""})
     def destroy(self, request, pk=None):
         queryset = TaskTag.objects.all()
         tasktag = get_object_or_404(queryset, pk=pk)
@@ -316,6 +327,8 @@ class TodoListViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_description="delete the todolist",
+                         responses={204: ""})
     def destroy(self, request, board_pk=None, pk=None):
         queryset = TodoList.objects.all()
         todolist = get_object_or_404(queryset, pk=pk)
