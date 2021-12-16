@@ -26,16 +26,15 @@ class Board(models.Model):
 
     users = models.ManyToManyField(User, related_name='boards')
 
-    
-
     @classmethod
     def create(cls, *args, **kwargs):
         new_board = cls(**kwargs)
 
         default_lists = ['todo', 'doing', 'done']
-        
+
         for i in range(3):
-            newlist = TodoList(title=default_lists[i], position=i+1, board=kwargs['board'])
+            newlist = TodoList(
+                title=default_lists[i], position=i+1, board=kwargs['board'])
             newlist.save()
             new_board.todolists.add(newlist)
 
@@ -79,7 +78,7 @@ class Task(models.Model):
     todo_list = models.ForeignKey(
         'TodoList', on_delete=models.CASCADE, null=True, related_name='tasks')
     tags = models.ManyToManyField('TaskTag', related_name='tasks', blank=True)
-    # мы не можем приступить к выполнению блокируемой задачи пока не решим все задачи-блокираторы 
+    # мы не можем приступить к выполнению блокируемой задачи пока не решим все задачи-блокираторы
     # (устанавливается определённый порядок выполнения)
 
     blocks_tasks = models.ManyToManyField(
