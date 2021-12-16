@@ -26,6 +26,24 @@ class Board(models.Model):
 
     users = models.ManyToManyField(User, related_name='boards')
 
+    
+
+    @classmethod
+    def create(cls, *args, **kwargs):
+        new_board = cls(**kwargs)
+
+        default_lists = ['todo', 'doing', 'done']
+        
+        for i in range(3):
+            newlist = TodoList(title=default_lists[i], position=i+1, board=kwargs['board'])
+            newlist.save()
+            new_board.todolists.add(newlist)
+
+        return new_board
+
+    def __str__(self) -> str:
+        return self.title
+
 
 class TodoList(models.Model):
     title = models.CharField(max_length=255)
@@ -39,6 +57,9 @@ class TodoList(models.Model):
 
     board = models.ForeignKey(
         'board', related_name='todolists', on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return self.title
 
 
 class Task(models.Model):
@@ -72,6 +93,9 @@ class Task(models.Model):
         blank=True
     )  # обычно одну сложную задачу разбивают на более простые и мелкие подзадачи
 
+    def __str__(self) -> str:
+        return self.title
+
     # refers_to = models.ForeignKey(
     #                               'Task',
     #                               related_name='refs',
@@ -85,3 +109,5 @@ class TaskTag(models.Model):
     title = models.CharField(max_length=255, unique=True)
     color = ColorField(default='#FF0000')
 
+    def __str__(self) -> str:
+        return self.title

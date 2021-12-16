@@ -4,16 +4,10 @@ import datetime
 
 
 class BoardSerializer(serializers.ModelSerializer):
-    """ 
-    fields:
-    {
-        title: Char(255),
-        description: Text(2048),
-        created_at: auto,
-        updated_at: auto,
-        users_ids: [3, 4, 8],
-    }
-    """
+    tasks = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    todolists = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
+
     class Meta:
         model = Board
         fields = '__all__'

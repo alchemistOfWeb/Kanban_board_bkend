@@ -128,15 +128,6 @@ class TaskViewSet(viewsets.ViewSet):
                             openapi.Parameter('completion_min', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
                             openapi.Parameter('completion_max', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
                          ],
-                        #  request_body=openapi.Schema(
-                        #      type=openapi.TYPE_OBJECT,
-                        #      properties={
-                        #          'dl_min': openapi.Schema(type=openapi.IN_QUERY, ),
-                        #          'dl_min': openapi.Schema(),
-                        #          'dl_min': openapi.Schema(),
-                        #          'dl_min': openapi.Schema(),
-                        #          'dl_min': openapi.Schema(),
-                        #      }),
                          responses={200: TaskSerializer(many=True)})
     def list(self, request, board_pk=None):
         """
@@ -160,9 +151,11 @@ class TaskViewSet(viewsets.ViewSet):
         """
         data = request.data
         serializer = TaskSerializer(data=data)
+        
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(operation_description="get one of the tasks by id with full info", 
