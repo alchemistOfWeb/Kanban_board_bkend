@@ -70,11 +70,16 @@ class FilteredTaskSerializer(serializers.ListSerializer):
         if dl_max:
             return data.filter(deadline_at__lt=q_params['dl_max'])
 
+        return data
+
     
     def tags_filter(self, data, q_params):
-        if 'hastags' in q_params:
-            tags_ids = q_params['hastags'].split(',')            
-            return data.filter(tags__id__in=tags_ids)
+        hastags = q_params.get('hastags')
+
+        if hastags:
+            tags_ids = q_params['hastags'].split(',')
+            return data.filter(tags__in=tags_ids).distinct()
+        
         return data
 
 
@@ -93,17 +98,17 @@ class FilteredTaskSerializer(serializers.ListSerializer):
 
         return data
 
-    def to_representation(self, data):
+    def to_representation(self, data=None):
         q_params = self.context['request'].query_params
         date_format = '%Y-%m-%d %H:%M'
-        
+
         data = self.completion_filter(data, q_params)
-
         data = self.tags_filter(data, q_params)
-
         data = self.deadline_range_filter(data, q_params, date_format='%Y-%m-%d %H:%M')
-        
-        if 'orderby' in q_params:
+
+        orderby = q_params.get('orderby')
+    
+        if orderby:
             oparams = q_params['orderby'].split(',')
             for param in oparams:
                 if param in self.allow_orderby_params:

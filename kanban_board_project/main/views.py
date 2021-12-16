@@ -29,8 +29,8 @@ class BoardViewSet(viewsets.ViewSet):
     # Boards
     """
     permission_classes = [permissions.IsAuthenticated]
-    my_tags = ['Boards']
     swagger_schema = CustomAutoSchema
+    my_tags = ['Boards']
     # filter_backends =
     # permission_classes_by_action = {'list': [permissions.IsAuthenticated], 'retrieve': [permissions.IsAuthenticated]}
 
@@ -119,7 +119,24 @@ class TaskViewSet(viewsets.ViewSet):
     swagger_schema = CustomAutoSchema
     my_tags = ['Tasks']
 
-    @swagger_auto_schema(operation_description="get the task list with filtering and pagination", 
+    @swagger_auto_schema(operation_description="get the task list with filtering and pagination",
+                         manual_parameters=[
+                            openapi.Parameter('dl_min', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, pattern='%Y-%m-%d %H:%M'),
+                            openapi.Parameter('dl_max', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+                            pattern='%Y-%m-%d %H:%M'),
+                            openapi.Parameter('hastags', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, pattern='int1,int2...'),
+                            openapi.Parameter('completion_min', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
+                            openapi.Parameter('completion_max', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
+                         ],
+                        #  request_body=openapi.Schema(
+                        #      type=openapi.TYPE_OBJECT,
+                        #      properties={
+                        #          'dl_min': openapi.Schema(type=openapi.IN_QUERY, ),
+                        #          'dl_min': openapi.Schema(),
+                        #          'dl_min': openapi.Schema(),
+                        #          'dl_min': openapi.Schema(),
+                        #          'dl_min': openapi.Schema(),
+                        #      }),
                          responses={200: TaskSerializer(many=True)})
     def list(self, request, board_pk=None):
         """
@@ -161,8 +178,7 @@ class TaskViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(operation_description="update the task",
-                         query_serializer=TaskSerializer,
-                         responses={205: TaskSerializer})
+                         query_serializer=TaskSerializer)
     def update(self, request, board_pk=None, pk=None):
         """
         change
@@ -177,19 +193,8 @@ class TaskViewSet(viewsets.ViewSet):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(operation_description="update the task",
-                         query_serializer=TaskSerializer(partial=True),
-                         responses={205: TaskSerializer})
+                         query_serializer=TaskSerializer(partial=True))
     def partial_update(self, request, board_pk=None, pk=None):
-        """
-        change some of this: 
-        subtasks-list(by ids), 
-        blocks(add blockirator, add blocking tasks),
-        implementation percentage,
-        move into another todolist(by id),
-        tags-list(by ids),
-        archive|unarchive,
-        change the color
-        """
         queryset = Task.objects.all()
         task = get_object_or_404(queryset, pk=pk)
         data = request.data

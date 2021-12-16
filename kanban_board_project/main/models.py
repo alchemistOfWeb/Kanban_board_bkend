@@ -25,7 +25,6 @@ class Board(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     users = models.ManyToManyField(User, related_name='boards')
-    # creator = models.ForeignKey(User, related_name='ownboards')
 
 
 class TodoList(models.Model):
@@ -34,6 +33,7 @@ class TodoList(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_archived = models.BooleanField(default=False)
+
     # need for deleting after some time
     archived_at = models.DateTimeField(null=True)
 
@@ -58,9 +58,12 @@ class Task(models.Model):
     todo_list = models.ForeignKey(
         'TodoList', on_delete=models.CASCADE, null=True, related_name='tasks')
     tags = models.ManyToManyField('TaskTag', related_name='tasks', blank=True)
-    # мы не можем приступить к выполнению блокируемой задачи пока не решим все задачи-блокираторы (устанавливается определённый порядок выполнения)
+    # мы не можем приступить к выполнению блокируемой задачи пока не решим все задачи-блокираторы 
+    # (устанавливается определённый порядок выполнения)
+
     blocks_tasks = models.ManyToManyField(
         'Task', related_name='blocked_by', blank=True)
+
     subtask_for = models.ForeignKey(
         'Task',
         related_name='subtasks',
@@ -68,17 +71,17 @@ class Task(models.Model):
         null=True,
         blank=True
     )  # обычно одну сложную задачу разбивают на более простые и мелкие подзадачи
+
     # refers_to = models.ForeignKey(
     #                               'Task',
     #                               related_name='refs',
     #                               on_delete=models.SET_NULL,
     #                               null=True
-    #                               ) # от выполнения одной задачи зависит и выполнение второй (выполняются в любом порядке)
+    #                               )
+    # от выполнения одной задачи зависит и выполнение второй (выполняются в любом порядке)
 
 
 class TaskTag(models.Model):
     title = models.CharField(max_length=255, unique=True)
     color = ColorField(default='#FF0000')
 
-
-# class TaskStatus(models.)
