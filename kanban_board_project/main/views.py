@@ -9,19 +9,8 @@ from .models import Task, TaskTag, TodoList, Board
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from django.utils.decorators import method_decorator
-from drf_yasg.inspectors import SwaggerAutoSchema
 from drf_yasg import openapi
-
-
-class CustomAutoSchema(SwaggerAutoSchema):
-
-    def get_tags(self, operation_keys=None):
-        tags = self.overrides.get('tags', None) or getattr(
-            self.view, 'my_tags', [])
-        if not tags:
-            tags = [operation_keys[0]]
-
-        return tags
+from .schemas import CustomAutoSchema
 
 
 class BoardViewSet(viewsets.ViewSet):
@@ -127,6 +116,7 @@ class TaskViewSet(viewsets.ViewSet):
                             openapi.Parameter('hastags', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, pattern='int1,int2...'),
                             openapi.Parameter('completion_min', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
                             openapi.Parameter('completion_max', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
+                            openapi.Parameter('hastags', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, pattern='f1,f2...', description='now there can be 2 params: deadline_at or/and completion'),
                          ],
                          responses={200: TaskSerializer(many=True)})
     def list(self, request, board_pk=None):

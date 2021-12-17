@@ -82,10 +82,10 @@ class FilteredTaskSerializer(serializers.ListSerializer):
         data = self.tags_filter(data, q_params)
         data = self.deadline_range_filter(data, q_params, date_format='%Y-%m-%d %H:%M')
 
-        orderby = q_params.get('orderby')
+        orderby = q_params.get('order_by')
     
         if orderby:
-            oparams = q_params['orderby'].split(',')
+            oparams = orderby.split(',')
             for param in oparams:
                 if param in self.allow_orderby_params:
                     data = data.order_by(param)
