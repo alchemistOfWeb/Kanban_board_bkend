@@ -1,27 +1,20 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django_filters.filters import OrderingFilter
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets, status, permissions
 from .serializers import TaskSerializer, TodoListSerializer, BoardSerializer, TaskTagSerializer
 from .models import Task, TaskTag, TodoList, Board
-# from django.db.models.query import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
-from django.utils.decorators import method_decorator
 from drf_yasg import openapi
 from .schemas import CustomAutoSchema
 
 
 class BoardViewSet(viewsets.ViewSet):
-    """
-    # Boards
-    """
     permission_classes = [permissions.IsAuthenticated]
     swagger_schema = CustomAutoSchema
     my_tags = ['Boards']
-    # filter_backends =
-    # permission_classes_by_action = {'list': [permissions.IsAuthenticated], 'retrieve': [permissions.IsAuthenticated]}
 
     @swagger_auto_schema(operation_description="get list of boards",
                          responses={200: BoardSerializer(many=True)})
@@ -35,7 +28,6 @@ class BoardViewSet(viewsets.ViewSet):
         serializer = BoardSerializer(boards, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
-    
     @swagger_auto_schema(operation_description="get list of boards",
                          query_serializer=BoardSerializer,
                          responses={201: BoardSerializer})
@@ -47,7 +39,7 @@ class BoardViewSet(viewsets.ViewSet):
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(operation_description="get one of the boards by id with full info", 
+    @swagger_auto_schema(operation_description="get one of the boards by id with full info",
                          responses={200: BoardSerializer})
     def retrieve(self, request, pk=None):
         """
@@ -64,9 +56,6 @@ class BoardViewSet(viewsets.ViewSet):
     @swagger_auto_schema(operation_description="update the board",
                          query_serializer=BoardSerializer)
     def update(self, request, pk=None):
-        """
-        change all: board name, board description, board users
-        """
         queryset = Board.objects.all()
         board = get_object_or_404(queryset, pk=pk)
         serializer = BoardSerializer(board, data=request.data)
@@ -75,12 +64,9 @@ class BoardViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(operation_description="update the board",
+    @swagger_auto_schema(operation_description="partial update the board",
                          query_serializer=BoardSerializer(partial=True))
     def partial_update(self, request, pk=None):
-        """
-        change some of this: board name, board description, board users
-        """
         queryset = Board.objects.all()
         board = get_object_or_404(queryset, pk=pk)
         serializer = BoardSerializer(board, data=request.data, partial=True)
@@ -89,12 +75,9 @@ class BoardViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(operation_description="delete the board",
+    @swagger_auto_schema(operation_description="delete the board with all its todolists and tasks",
                          responses={204: ""})
     def destroy(self, request, pk=None):
-        """
-        delete board with all its todolists and tasks
-        """
         queryset = Board.objects.all()
         board = get_object_or_404(queryset, pk=pk)
         board.delete()
@@ -110,22 +93,26 @@ class TaskViewSet(viewsets.ViewSet):
 
     @swagger_auto_schema(operation_description="get the task list with filtering and pagination",
                          manual_parameters=[
-                            openapi.Parameter('dl_min', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, pattern='%Y-%m-%d %H:%M'),
-                            openapi.Parameter('dl_max', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
-                            pattern='%Y-%m-%d %H:%M'),
-                            openapi.Parameter('hastags', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, pattern='int1,int2...'),
-                            openapi.Parameter('completion_min', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
-                            openapi.Parameter('completion_max', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
-                            openapi.Parameter('hastags', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, pattern='f1,f2...', description='now there can be 2 params: deadline_at or/and completion'),
+                             openapi.Parameter(
+                                 'dl_min', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, pattern='%Y-%m-%d %H:%M'),
+                             openapi.Parameter(
+                                 'dl_max', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+                                 pattern='%Y-%m-%d %H:%M'),
+                             openapi.Parameter(
+                                 'hastags', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, pattern='int1,int2...'),
+                             openapi.Parameter(
+                                 'completion_min', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
+                             openapi.Parameter(
+                                 'completion_max', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
+                             openapi.Parameter('order_by', in_=openapi.IN_QUERY, 
+                                 type=openapi.TYPE_STRING, 
+                                 pattern='str1[,str2[, ...]',
+                                 description='order by parameter. It can be completion or -completion, deadline or -deadline'),
                          ],
                          responses={200: TaskSerializer(many=True)})
     def list(self, request, board_pk=None):
-        """
-        get tasks of the board with filtering and pagination
-        """
         queryset = Board.objects.all()
         board = get_object_or_404(queryset, pk=board_pk)
-        # q_params = request.query_params
         tasks = board.tasks.all()
 
         serializer = TaskSerializer(
@@ -141,14 +128,14 @@ class TaskViewSet(viewsets.ViewSet):
         """
         data = request.data
         serializer = TaskSerializer(data=data)
-        
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(operation_description="get one of the tasks by id with full info", 
+    @swagger_auto_schema(operation_description="get one of the tasks by id with full info",
                          responses={200: TaskSerializer})
     def retrieve(self, request, board_pk=None, pk=None):
         """
@@ -163,9 +150,6 @@ class TaskViewSet(viewsets.ViewSet):
     @swagger_auto_schema(operation_description="update the task",
                          query_serializer=TaskSerializer)
     def update(self, request, board_pk=None, pk=None):
-        """
-        change
-        """
         queryset = Task.objects.all()
         task = get_object_or_404(queryset, pk=pk)
         data = request.data
@@ -201,7 +185,7 @@ class TaskTagViewSet(viewsets.ViewSet):
     swagger_schema = CustomAutoSchema
     my_tags = ['Task Tags']
 
-    @swagger_auto_schema(operation_description="create new task tag",                         
+    @swagger_auto_schema(operation_description="create new task tag",
                          responses={200: TaskTagSerializer(many=True)})
     def list(self, request):
         tags = TaskTag.objects.all()
@@ -212,12 +196,6 @@ class TaskTagViewSet(viewsets.ViewSet):
                          query_serializer=TaskTagSerializer,
                          responses={201: TaskTagSerializer})
     def create(self, request):
-        """
-        {
-            "title": "unique tag name",
-            "color": "#ff0000"
-        }
-        """
         data = request.data
         serializer = TaskTagSerializer(data=data)
         if serializer.is_valid():
@@ -282,9 +260,6 @@ class TodoListViewSet(viewsets.ViewSet):
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # def retrieve(self, request, board_pk=None, pk=None):
-    #     pass
-
     @swagger_auto_schema(operation_description="update the todolist",
                          query_serializer=TodoListSerializer)
     def update(self, request, board_pk=None, pk=None):
@@ -299,13 +274,6 @@ class TodoListViewSet(viewsets.ViewSet):
     @swagger_auto_schema(operation_description="partial update the todolist",
                          query_serializer=TodoListSerializer(partial=True))
     def partial_update(self, request, board_pk=None, pk=None):
-        """
-        change some of this:
-        move position(new pos int)
-        title,
-        archive|unarchive,
-        # move all tasks into another todolist
-        """
         queryset = TodoList.objects.all()
         todolist = get_object_or_404(queryset, pk=pk)
         serializer = TodoListSerializer(

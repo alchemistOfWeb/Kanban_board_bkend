@@ -3,19 +3,6 @@ from django.db import models
 from colorfield.fields import ColorField
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
-"""
-todo:
-
-User
-⇅(boards_users)
-Board: title, description
-↑
-TodoList: title, board(fk MtO)
-↑
-Task: text, description, status(fk|set), blockedBy(fk MtM>this), subtaskFor(fk MtO>this), todolist(fk MtO)
-⇅(tasks_tags)
-TaskTag: title
-"""
 
 
 class Board(models.Model):
@@ -23,7 +10,6 @@ class Board(models.Model):
     description = models.TextField(max_length=2048)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
     users = models.ManyToManyField(User, related_name='boards')
 
     @classmethod
@@ -50,8 +36,6 @@ class TodoList(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_archived = models.BooleanField(default=False)
-
-    # need for deleting after some time
     archived_at = models.DateTimeField(null=True)
 
     board = models.ForeignKey(
@@ -78,8 +62,6 @@ class Task(models.Model):
     todo_list = models.ForeignKey(
         'TodoList', on_delete=models.CASCADE, null=True, related_name='tasks')
     tags = models.ManyToManyField('TaskTag', related_name='tasks', blank=True)
-    # мы не можем приступить к выполнению блокируемой задачи пока не решим все задачи-блокираторы
-    # (устанавливается определённый порядок выполнения)
 
     blocks_tasks = models.ManyToManyField(
         'Task', related_name='blocked_by', blank=True)
@@ -90,7 +72,7 @@ class Task(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True
-    )  # обычно одну сложную задачу разбивают на более простые и мелкие подзадачи
+    )
 
     def __str__(self) -> str:
         return self.title
@@ -101,7 +83,6 @@ class Task(models.Model):
     #                               on_delete=models.SET_NULL,
     #                               null=True
     #                               )
-    # от выполнения одной задачи зависит и выполнение второй (выполняются в любом порядке)
 
 
 class TaskTag(models.Model):

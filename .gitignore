@@ -4,5 +4,8 @@ film_base/db.sqlite3
 **/__pycache__
 .env
 .idea
-db.*
+db.sqlite3
+db.sqlite
 static_doc/
+geckodriver.log
+functional_tests.py

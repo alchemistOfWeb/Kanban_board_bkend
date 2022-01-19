@@ -7,35 +7,33 @@ class BoardSerializer(serializers.ModelSerializer):
     tasks = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     todolists = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
-
     class Meta:
         model = Board
         fields = '__all__'
 
 
 class TaskTagSerializer(serializers.ModelSerializer):
-    
-    
     class Meta:
         model = TaskTag
         fields = '__all__'
 
 
 class FilteredTaskSerializer(serializers.ListSerializer):
-    allow_orderby_params = ['completion', '-completion', 'deadline_at', '-deadline_at']
-
-
+    allow_orderby_params = ['completion',
+                            '-completion', 'deadline_at', '-deadline_at']
     tags = TaskTagSerializer(many=True)
 
-    def deadline_range_filter(self, data, q_params, date_format='%Y-%m-%d %H:%M'):        
+    def deadline_range_filter(self, data, q_params, date_format='%Y-%m-%d %H:%M'):
         dl_min = q_params.get('dl_min')
         dl_max = q_params.get('dl_max')
 
         if dl_min:
-            dl_min = datetime.datetime.strptime(q_params['dl_min'], date_format)
+            dl_min = datetime.datetime.strptime(
+                q_params['dl_min'], date_format)
 
         if dl_max:
-            dl_max = datetime.datetime.strptime(q_params['dl_max'], date_format)
+            dl_max = datetime.datetime.strptime(
+                q_params['dl_max'], date_format)
 
         if dl_min and dl_max:
             return data.filter(deadline_at__range=(dl_min, dl_max))
@@ -48,16 +46,14 @@ class FilteredTaskSerializer(serializers.ListSerializer):
 
         return data
 
-    
     def tags_filter(self, data, q_params):
         hastags = q_params.get('hastags')
 
         if hastags:
             tags_ids = q_params['hastags'].split(',')
             return data.filter(tags__in=tags_ids).distinct()
-        
-        return data
 
+        return data
 
     def completion_filter(self, data, q_params):
         cmpl_min = q_params.get('completion_min')
@@ -65,7 +61,7 @@ class FilteredTaskSerializer(serializers.ListSerializer):
 
         if cmpl_min and cmpl_max:
             return data.filter(completion__range=(cmpl_min, cmpl_max))
-        
+
         if cmpl_min:
             return data.filter(completion__gt=cmpl_min)
 
@@ -80,10 +76,11 @@ class FilteredTaskSerializer(serializers.ListSerializer):
 
         data = self.completion_filter(data, q_params)
         data = self.tags_filter(data, q_params)
-        data = self.deadline_range_filter(data, q_params, date_format='%Y-%m-%d %H:%M')
+        data = self.deadline_range_filter(
+            data, q_params, date_format=date_format)
 
         orderby = q_params.get('order_by')
-    
+
         if orderby:
             oparams = orderby.split(',')
             for param in oparams:
@@ -104,7 +101,7 @@ class FilteredTaskSerializer(serializers.ListSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     blocked_by = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     subtasks = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    
+
     # tags = TaskTagSerializer(many=True)
     # def get_tags(self):
     #     tags = TaskTagSerializer(many=True)
@@ -118,7 +115,6 @@ class TaskSerializer(serializers.ModelSerializer):
 
 
 class TodoListSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = TodoList
         fields = '__all__'

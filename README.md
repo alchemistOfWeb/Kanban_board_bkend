@@ -1,15 +1,34 @@
 # kanban board backend
 #### developed by Nikita Kuznetsov
 
-## Описание задачи:
+
+* [1. Формулировка тз](#task_description)
+* [2. Установка и настройка](#setup)
+    * [1. Установка зависимостей](#dependences)
+    * [2. Секретный ключ](#create_secret_key)
+    * [3. Настройка базы данных](#setup_db)
+    * [4. Миграции](#migrations)
+    * [5. Для доступа к админке ](#admin_panel)
+    * [6. Запуск тестового сервера](#test_server)
+    * [7. swagger и документация к АПИ](#swagger)
+* [3. Описание API и функционала приложения](#api_description)
+    * [Регистрация и вход](#auth)
+    * [Пользователи](#users)
+    * [Доски](#boards)
+    * [Задачи](#tasks)
+    * [Теги для задач](#tasktags)
+    * [Списки задач](#todolists)
+
+
+## 1. Формулировка тз:
+<a name="task_description"></a> 
 За основу были взяты принципы работы kanban доски Trello
 
 ### Общие требования: 
 
-* [x] реализовать REST API
+* [x] REST API
 * [x] Django, drf
 
-* [x] Общее:
 * [x] Пользователь может создавать свои записи (в зависимости от задания), просматривать и удалять; просмотр доступен для списка записей и для каждой записи отдельно
 * [x] Авторизация/аутентификация: 
     * [x] пользователь может регистрироваться в приложении (создание аккаунта)
@@ -36,7 +55,7 @@
         * [ ] “связана с” ??????
         * [x] “подзадача к”
 
-### Дополнительно:
+### Свои идеи:
 
 * [x] Можно менять порядок задач и списков задач
 * [x] Для задач и тегов можно устанавливать цвет
@@ -45,25 +64,42 @@
 
 * [ ] Пагинация
 * [ ] архивирование задач, списков задач и досок
-* [ ] Seeders
 * [ ] Tests
 * [ ] docker image
-    
 
-## 1. Getting started
-### step 1
+<br><br>
+
+---
+---
+---
+---
+
+<br>  
+
+## 2. Установка и настройка
+<a name="setup"></a> 
+
+### 1 Установка зависимостей
+<a name="dependences"></a> 
+
+Для начала установите python.
+Допустимы версии от 3.6 до 3.9
+
 ```bash
-> cd нужный каталог
-> git clone https://github.com/alchemistOfWeb/kanban_board_bkend.git
-> cd kanban_board_bkend
-> python -m venv venv
-> pip install -r requirements.txt
+cd нужный каталог
+git clone https://github.com/alchemistOfWeb/kanban_board_bkend.git
+cd kanban_board_bkend
+python -m venv venv
+source <venv>/bin/activate # if u use linux
+venv\Scripts\activate # if u use windows platform
+pip install -r requirements.txt
 ```
 
-### step 2
-Скопируйте файл .env.example и уберите строку `.exmaple` из названия копии (оставьте только `.env`)
+### 2 Секретный ключ
+<a name="create_secret_key"></a> 
 
-### step 3
+Для начала скопируйте файл .env.example и уберите строку `.exmaple` из названия копии (оставьте только `.env`)
+
 Создайте секретный ключ и добавьте в настройки соответствующими командами:
 ```bash
 python manage.py shell
@@ -73,45 +109,93 @@ python manage.py shell
 dotenv set SECRET_KEY 'getted_secret_key' # сюда нужно вставить полученный ключ
 ```
 
-### step 4
-настройте бд в `kanban_board_project\settings.py`
+### 3 Настройка базы данных
+<a name="setup_db"></a> 
 
-### step 5
-Сделайте миг-ции в вашу бд
+Установите настройки для вашей бд в `kanban_board_project\settings.py`.
+По умолчание для бд стоят след. настройки. Их можно не изменять, тогда в дирекотории с manage.py будет создан файл db.sqlite3 в качестве базы данных.
+```py
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+```
+для подключения к др. базам данных смотрите https://docs.djangoproject.com/en/3.1/ref/databases/
+
+Затем вы можете заимпортировать базу данных созданную мной с помощью средств джанго.
+Для этого исполните следующую команду в терминале из директории `kanban_board_project/`:
+```bash
+python manage.py loaddata db.json
+```
+
+Также в таком случае вам не придётся создавать суперюзера, те. вы можете пропустить шаги 4 и 5.
+Вот имя и пароль для доступа к админке
+```txt
+username: nikita
+password: nikita
+```
+
+### 4 Миграции
+<a name="migrations"></a> 
+
+> Пропустите этот шаг, если вы выполнили django-миграцию бд (см. шаг 3)
+
+Сделайте миграции в вашу бд
 ```bash
 python manage.py makemigrations
 python manage.py migrate
 ```
 
-### step 6
+### 5 Для доступа к админке 
+<a name="admin_panel"></a> 
+
+> Пропустите этот шаг, если вы выполнили django-миграцию бд (см. шаг 3)
+
 Создайте суперюзера для доступа к админке
 ```bash
 python manage.py create superuser
-name: *******
-pas: **********
+name: ******* # придумайте, например admin
+pas: ********** # придумайте, например admin
 ```
 
-### step 7 (autoseedering in development)
+### 6 Запуск тестового сервера
+<a name="test_server"></a> 
 
-### step 8
 теперь можно запустить тестовый сервер
 ```bash
 python manage.py runserver
 ```
 
-### step 9 (swagger)
+### 7 swagger и документация к АПИ
+<a name="swagger"></a> 
+
 перейдя по данному адресу можно посмотреть и опробовать все возможные запросы к серверу
-```
+```s
 http:\\{your_host}\swagger
 ```
-где `your_host` вставьте домен на котором запущен сервер(по умолчанию тестовый сервер запускается на ``)
+где `your_host` вставьте домен на котором запущен сервер.
 
 
+<br><br>
 
-## 2. Описание API и функционала приложения
-#### Подробнее про api можно посмотреть запустив проект и перейдя адресу c uri /swagger/
-    
-### Auth 
+---
+---
+---
+---
+
+<br>
+
+## 3. Описание API и функционала приложения
+<a name="api_description"></a> 
+
+> Подробнее про api можно посмотреть запустив проект и перейдя адресу c uri /swagger/
+
+### Регистрация и вход 
+<a name="auth"></a> 
+
+
 ```js
 [POST] /auth/token/login
 [POST] /auth/token/logout
@@ -120,7 +204,10 @@ http:\\{your_host}\swagger
 `Authentication` со значение токена полученного при регистрации/входе в формате `Token {your_token}`
         
 
-### Users
+### Пользователи
+<a name="Users"></a> 
+
+
 ```js
 [GET]    /auth/users/       // получение всех пользователей
 [POST]   /auth/users/       // создание нового пользователя
@@ -133,7 +220,10 @@ http:\\{your_host}\swagger
 [DELETE] /auth/users/{id}/  // удаление пользователя по id
 ```
 
-### Boards
+### Доски
+<a name="boards"></a> 
+
+
 Доска - она же и проект.
 ```js
 [GET]    /api_v1/boards/        // get list
@@ -150,7 +240,9 @@ http:\\{your_host}\swagger
 * "done"(сделано)
 
 
-### Tasks
+### Задачи
+<a name="tasks"></a> 
+
 
 ```js
 /* Все запросы к задачам */
@@ -215,7 +307,10 @@ http:\\{your_host}\swagger
 todo:
 1. запрещать создание связей с задачами других досок
 ```
-### TaskTags
+### Теги для задач
+<a name="tasktags"></a> 
+
+
 ```js
 [GET]    /api_v1/tags/          // get list
 [POST]   /api_v1/tags/          // create new
@@ -225,7 +320,10 @@ todo:
 [GET]    /api_v1/tags/{id}/     // get one
 ```
 
-### TodoLists
+### Списки задач
+<a name="todolists"></a> 
+
+
 Списки которые соответствуют статусам для задач
 
 ```js
