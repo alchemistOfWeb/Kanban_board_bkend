@@ -12,19 +12,6 @@ class Board(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     users = models.ManyToManyField(User, related_name='boards')
 
-    @classmethod
-    def create(cls, *args, **kwargs):
-        new_board = cls(**kwargs)
-
-        default_lists = ['todo', 'doing', 'done']
-
-        for i in range(3):
-            newlist = TodoList(
-                title=default_lists[i], position=i+1, board=kwargs['board'])
-            newlist.save()
-            new_board.todolists.add(newlist)
-
-        return new_board
 
     def __str__(self) -> str:
         return self.title

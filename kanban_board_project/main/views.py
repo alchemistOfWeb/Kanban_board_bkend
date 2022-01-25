@@ -233,6 +233,7 @@ class TaskTagViewSet(viewsets.ViewSet):
         queryset = TaskTag.objects.all()
         tasktag = get_object_or_404(queryset, pk=pk)
         tasktag.delete()
+        
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -248,6 +249,7 @@ class TodoListViewSet(viewsets.ViewSet):
         board = get_object_or_404(queryset, pk=board_pk)
         todolists = board.todolists.all()
         serializer = TodoListSerializer(todolists, many=True)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(operation_description="create new todolist",
@@ -255,9 +257,11 @@ class TodoListViewSet(viewsets.ViewSet):
     def create(self, request, board_pk=None):
         data = request.data
         serializer = TodoListSerializer(data=data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(operation_description="update the todolist",
@@ -266,9 +270,11 @@ class TodoListViewSet(viewsets.ViewSet):
         queryset = TodoList.objects.all()
         todolist = get_object_or_404(queryset, pk=pk)
         serializer = TodoListSerializer(todolist, data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(operation_description="partial update the todolist",

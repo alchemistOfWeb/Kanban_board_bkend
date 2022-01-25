@@ -70,7 +70,23 @@ class FilteredTaskSerializer(serializers.ListSerializer):
 
         return data
 
+
+    def order_by(self, data, q_params):
+        orderby = q_params.get('order_by')
+
+        if orderby:
+            oparams = orderby.split(',')
+            for param in oparams:
+                if param in self.allow_orderby_params:
+                    data = data.order_by(param)
+        
+        return data
+    
+
     def to_representation(self, data=None):
+        """
+        The methon that to be called when we use serializer for getting a list of 
+        """
         q_params = self.context['request'].query_params
         date_format = '%Y-%m-%d %H:%M'
 
@@ -79,14 +95,8 @@ class FilteredTaskSerializer(serializers.ListSerializer):
         data = self.deadline_range_filter(
             data, q_params, date_format=date_format)
 
-        orderby = q_params.get('order_by')
-
-        if orderby:
-            oparams = orderby.split(',')
-            for param in oparams:
-                if param in self.allow_orderby_params:
-                    data = data.order_by(param)
-
+        data = self.order_by(data, q_params)
+        
         return super(FilteredTaskSerializer, self).to_representation(data)
 
     class Meta:
