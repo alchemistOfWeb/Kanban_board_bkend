@@ -15,17 +15,12 @@ class BoardViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
     swagger_schema = CustomAutoSchema
     my_tags = ['Boards']
-    qeuryset = Board.objects
+    queryset = Board.objects
 
 
     @swagger_auto_schema(operation_description="get list of boards",
                          responses={200: BoardSerializer(many=True)})
     def list(self, request):
-        """
-        todo:
-        send only user's boards
-        get info about tasks of the board (num, last update,...)
-        """
         serializer = BoardSerializer(self.queryset, many=True)
 
         return Response(data=serializer.data, status=status.HTTP_200_OK)
