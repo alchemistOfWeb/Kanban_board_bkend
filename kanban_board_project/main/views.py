@@ -82,7 +82,7 @@ class BoardViewSet(viewsets.ViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TaskViewSet(viewsets.ViewSet, ListModelMixin):
+class TaskViewSet(viewsets.ViewSet):
     queryset = Task.objects
     serializer_class = TaskSerializer
     filter_backends = [DjangoFilterBackend, OrderingFilter]
@@ -94,7 +94,7 @@ class TaskViewSet(viewsets.ViewSet, ListModelMixin):
 
 
     def filter_queryset(self, queryset):
-        for backend in list(self.filter_backends):
+        for backend in self.filter_backends:
             queryset = backend().filter_queryset(self.request, queryset, view=self)
 
         return queryset
@@ -104,7 +104,6 @@ class TaskViewSet(viewsets.ViewSet, ListModelMixin):
                          responses={200: TaskSerializer(many=True)})
     def list(self, request, board_pk=None):
         tasks = self.queryset.filter(board_id=board_pk)
-        # filtered_tasks = TaskFilter(request.query_params, tasks)
         serializer = self.serializer_class(self.filter_queryset(tasks), 
                                            many=True, 
                                            context={"request": request})
@@ -139,11 +138,10 @@ class TaskViewSet(viewsets.ViewSet, ListModelMixin):
         task = get_object_or_404(self.queryset, pk=pk)
         serializer = self.serializer_class(task, data=request.data)
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(status=status.HTTP_205_RESET_CONTENT)
-
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
+        return Response(status=status.HTTP_205_RESET_CONTENT)
 
 
     @swagger_auto_schema(operation_description="update the task",
