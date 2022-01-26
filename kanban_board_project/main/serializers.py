@@ -85,7 +85,7 @@ class FilteredTaskSerializer(serializers.ListSerializer):
 
     def to_representation(self, data=None):
         """
-        The methon that to be called when we use serializer for getting a list of 
+        The methon that to be called when we use serializer for getting list of data
         """
         q_params = self.context['request'].query_params
         date_format = '%Y-%m-%d %H:%M'

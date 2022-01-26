@@ -9,4 +9,4 @@ router.register('tags', views.TaskTagViewSet, basename='tags')
 router.register(r'boards/(?P<board_pk>\d+)/tasks', views.TaskViewSet, basename='tasks')
 router.register(r'boards/(?P<board_pk>\d+)/todolists', views.TodoListViewSet, basename='todolists')
 
-urlpatterns = [] + router.urls
+urlpatterns = router.urls
