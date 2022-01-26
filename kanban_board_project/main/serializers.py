@@ -19,85 +19,8 @@ class TaskTagSerializer(serializers.ModelSerializer):
 
 
 class FilteredTaskSerializer(serializers.ListSerializer):
-    allow_orderby_params = ['completion',
-                            '-completion', 'deadline_at', '-deadline_at']
     tags = TaskTagSerializer(many=True)
-
-    def deadline_range_filter(self, data, q_params, date_format='%Y-%m-%d %H:%M'):
-        dl_min = q_params.get('dl_min')
-        dl_max = q_params.get('dl_max')
-
-        if dl_min:
-            dl_min = datetime.datetime.strptime(
-                q_params['dl_min'], date_format)
-
-        if dl_max:
-            dl_max = datetime.datetime.strptime(
-                q_params['dl_max'], date_format)
-
-        if dl_min and dl_max:
-            return data.filter(deadline_at__range=(dl_min, dl_max))
-
-        if dl_min:
-            return data.filter(deadline_at__gt=q_params['dl_min'])
-
-        if dl_max:
-            return data.filter(deadline_at__lt=q_params['dl_max'])
-
-        return data
-
-    def tags_filter(self, data, q_params):
-        hastags = q_params.get('hastags')
-
-        if hastags:
-            tags_ids = q_params['hastags'].split(',')
-            return data.filter(tags__in=tags_ids).distinct()
-
-        return data
-
-    def completion_filter(self, data, q_params):
-        cmpl_min = q_params.get('completion_min')
-        cmpl_max = q_params.get('completion_max')
-
-        if cmpl_min and cmpl_max:
-            return data.filter(completion__range=(cmpl_min, cmpl_max))
-
-        if cmpl_min:
-            return data.filter(completion__gt=cmpl_min)
-
-        if cmpl_max:
-            return data.filter(completion__lt=cmpl_max)
-
-        return data
-
-
-    def order_by(self, data, q_params):
-        orderby = q_params.get('order_by')
-
-        if orderby:
-            oparams = orderby.split(',')
-            for param in oparams:
-                if param in self.allow_orderby_params:
-                    data = data.order_by(param)
-        
-        return data
     
-
-    def to_representation(self, data=None):
-        """
-        The methon that to be called when we use serializer for getting list of data
-        """
-        q_params = self.context['request'].query_params
-        date_format = '%Y-%m-%d %H:%M'
-
-        data = self.completion_filter(data, q_params)
-        data = self.tags_filter(data, q_params)
-        data = self.deadline_range_filter(
-            data, q_params, date_format=date_format)
-
-        data = self.order_by(data, q_params)
-        
-        return super(FilteredTaskSerializer, self).to_representation(data)
 
     class Meta:
         model = Task

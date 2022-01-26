@@ -1,13 +1,17 @@
 from django.shortcuts import get_object_or_404
-from django_filters.filters import OrderingFilter
+from django.template import context
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets, status, permissions
-from .serializers import TaskSerializer, TodoListSerializer, BoardSerializer, TaskTagSerializer
-from .models import Task, TaskTag, TodoList, Board
-from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
+from rest_framework.mixins import ListModelMixin
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from .filters import TaskFilter
+from .serializers import TaskSerializer, TodoListSerializer, BoardSerializer, TaskTagSerializer
+from .models import Task, TaskTag, TodoList, Board
 from .schemas import CustomAutoSchema
 
 
@@ -78,38 +82,32 @@ class BoardViewSet(viewsets.ViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TaskViewSet(viewsets.ViewSet):
-    # filter_backends = (DjangoFilterBackend, OrderingFilter)
-    # ordering_fields = ['deadline_at', 'position', 'completion']
+class TaskViewSet(viewsets.ViewSet, ListModelMixin):
+    queryset = Task.objects
+    serializer_class = TaskSerializer
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = TaskFilter
+    ordering_fields = ['deadline_at', 'completion']
     permission_classes = [permissions.IsAuthenticated]
     swagger_schema = CustomAutoSchema
     my_tags = ['Tasks']
-    queryset = Task.objects
+
+
+    def filter_queryset(self, queryset):
+        for backend in list(self.filter_backends):
+            queryset = backend().filter_queryset(self.request, queryset, view=self)
+
+        return queryset
 
 
     @swagger_auto_schema(operation_description="get the task list with filtering and pagination",
-                         manual_parameters=[
-                             openapi.Parameter(
-                                 'dl_min', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, pattern='%Y-%m-%d %H:%M'),
-                             openapi.Parameter(
-                                 'dl_max', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
-                                 pattern='%Y-%m-%d %H:%M'),
-                             openapi.Parameter(
-                                 'hastags', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, pattern='int1,int2...'),
-                             openapi.Parameter(
-                                 'completion_min', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
-                             openapi.Parameter(
-                                 'completion_max', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
-                             openapi.Parameter('order_by', in_=openapi.IN_QUERY, 
-                                 type=openapi.TYPE_STRING, 
-                                 pattern='str1[,str2[, ...]',
-                                 description='order by parameter. It can be completion or -completion, deadline or -deadline'),
-                         ],
                          responses={200: TaskSerializer(many=True)})
     def list(self, request, board_pk=None):
-        tasks = Task.objects.filter(board_id=board_pk)
-        serializer = TaskSerializer(
-            tasks, many=True, context={'request': request})
+        tasks = self.queryset.filter(board_id=board_pk)
+        # filtered_tasks = TaskFilter(request.query_params, tasks)
+        serializer = self.serializer_class(self.filter_queryset(tasks), 
+                                           many=True, 
+                                           context={"request": request})
 
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
@@ -119,7 +117,7 @@ class TaskViewSet(viewsets.ViewSet):
                          responses={201: TaskSerializer(many=True)})
     def create(self, request, board_pk=None, pk=None):
         data = request.data
-        serializer = TaskSerializer(data=data)
+        serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -130,7 +128,7 @@ class TaskViewSet(viewsets.ViewSet):
                          responses={200: TaskSerializer})
     def retrieve(self, request, board_pk=None, pk=None):
         task = get_object_or_404(self.queryset, pk=pk)
-        serializer = TaskSerializer(task)
+        serializer = self.serializer_class(task)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -139,7 +137,7 @@ class TaskViewSet(viewsets.ViewSet):
                          query_serializer=TaskSerializer)
     def update(self, request, board_pk=None, pk=None):
         task = get_object_or_404(self.queryset, pk=pk)
-        serializer = TaskSerializer(task, data=request.data)
+        serializer = self.serializer_class(task, data=request.data)
 
         if serializer.is_valid():
             serializer.save()
@@ -152,7 +150,7 @@ class TaskViewSet(viewsets.ViewSet):
                          query_serializer=TaskSerializer(partial=True))
     def partial_update(self, request, board_pk=None, pk=None):
         task = get_object_or_404(self.queryset, pk=pk)
-        serializer = TaskSerializer(task, data=request.data, partial=True)
+        serializer = self.serializer_class(task, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
